@@ -1,0 +1,72 @@
+//controller
+
+module controller (
+    input  logic [31:0] inst,
+    output logic        rg_wr, sel_A, sel_B,
+    output logic [1:0]  wb_sel,
+    output logic [2:0]  rd_en, wr_en, br_type,
+    output logic [3:0]  alu_op
+);
+    logic [6:0] opcode;
+    logic [2:0] func3;
+    logic [6:0] func7;
+
+    always_comb
+    begin
+        opcode = inst[6 : 0];
+        func3  = inst[14:12];
+        func7  = inst[31:25];
+    end
+
+    always_comb
+    begin
+        br_type = 3'b000;
+        sel_A   = 0;
+        sel_B   = 0;
+        wb_sel  = 0;
+        rg_wr   = 0;
+        rd_en   = 0;
+        wr_en   = 0;
+        alu_op  = 0;
+
+        case (opcode)
+            7'b0110011:
+                br_type = 3'b000;
+                sel_A   = 1;
+                sel_B   = 0;
+                wb_sel  = 1;
+                rg_wr   = 1;
+
+                case (func3)
+                    3'b000: alu_op = (func7 == 7'b0000000) ? 4'b0001 : 4'b0010;
+                    3'b100: alu_op = (func7 == 7'b0000000) ? 4'b0011 : 4'b0100;
+                    3'b110: alu_op = (func7 == 7'b0000000) ? 4'b0101 : 0;
+                    3'b010: alu_op = (func7 == 7'b0000000) ? 4'b0110 : 4'b0111;
+                    3'b101: alu_op = (func7 == 7'b0000000) ? 4'b1000 : 4'b1001;
+                    3'b001: alu_op = 4'b1010;
+                    default: alu_op = 0;
+                endcase
+
+            7'b0010011:
+                br_type = 3'b000;
+                sel_A   = 1;
+                sel_B   = 1;
+                wb_sel  = 1;
+                rg_wr   = 1;
+
+                case (func3)
+                    3'b000: alu_op = 4'b0001;
+                    3'b100: alu_op = 4'b0011;
+                    3'b110: alu_op = 4'b0100;
+                    3'b111: alu_op = 4'b0101;
+                    3'b010: alu_op = 4'b1000;
+                    3'b001: alu_op = 4'b1010;
+                    3'b101: alu_op = 4'b1000;
+                    3'b011: alu_op = 4'b1001;
+                    default: alu_op = 0;
+                endcase
+
+            default:
+        endcase
+    end
+endmodule
